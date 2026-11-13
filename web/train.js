@@ -4,7 +4,8 @@
  */
 'use strict';
 
-const TARGET = '生存还是毁灭，这是一个问题';
+const DEFAULT_TARGET = '生存还是毁灭，这是一个问题';
+let TARGET = DEFAULT_TARGET;
 const BOS = '^', EOS = '$';
 
 // ---------------------------------------------------------------- 随机数
@@ -204,8 +205,9 @@ function runExp2(vocab, rand) {
 // ---------------------------------------------------------------- 实验③：REINFORCE
 function runExp3(vocab, lm, mode, seed, onProgress) {
   const V = vocab.length, L = TARGET.length, BOSI = V;
-  // 浏览器演示用 300 步（报告里的 Python 版是 600 步）；目标/混合通常在 120–180 步命中
-  const steps = 300, batch = 64, lr = 0.05, wTarget = 0.6, entropy = 0.01, logEvery = 1;
+  // 默认目标 300 步；目标更长时适当加步数（最多 600 步）
+  const steps = Math.min(600, 300 + Math.max(0, L - 13) * 25);
+  const batch = 64, lr = 0.05, wTarget = 0.6, entropy = 0.01, logEvery = 1;
   const uniform = mode === 'sparse'; // 稀疏奖励几乎恒为 0，策略保持均匀，可直接均匀采样
   const rand = mulberry32(seed);
   const tgt = new Int16Array(L);
@@ -387,7 +389,8 @@ function runExp3(vocab, lm, mode, seed, onProgress) {
 
 // ---------------------------------------------------------------- Worker 入口
 self.onmessage = (e) => {
-  const { seed, corpus } = e.data;
+  const { seed, corpus, target } = e.data;
+  TARGET = (target || DEFAULT_TARGET).trim();
   const t0 = performance.now();
   const report = (pct, label) => self.postMessage({ type: 'progress', pct: Math.round(pct), label });
   try {

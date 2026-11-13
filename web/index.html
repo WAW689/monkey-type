@@ -19,7 +19,17 @@
   #about { background:transparent; border:1px solid var(--line); color:var(--dim); border-radius:6px;
            padding:3px 8px; font:inherit; font-size:11px; letter-spacing:0; cursor:pointer; flex:none; }
   #about:hover { color:var(--fg); border-color:var(--gold); }
-  .sub { color:var(--dim); font-size:12px; margin-bottom:12px; }
+  .sub { color:var(--dim); font-size:12px; margin-bottom:8px; }
+  .targetedit { display:flex; gap:6px; margin:0 0 10px; }
+  .targetedit input { flex:1; min-width:0; background:#171a21; color:var(--fg); border:1px solid var(--line);
+                       border-radius:6px; padding:5px 8px; font:inherit; font-size:12px; }
+  .targetedit input:focus { outline:none; border-color:var(--gold); }
+  .targetedit input::placeholder { color:#6d6f77; }
+  .targetedit input:disabled { opacity:.55; }
+  .targetedit button { background:#232631; color:var(--fg); border:1px solid var(--line); border-radius:6px;
+                       padding:5px 9px; font:inherit; font-size:12px; cursor:pointer; white-space:nowrap; flex:none; }
+  .targetedit button:hover { border-color:var(--gold); }
+  .targetedit button:disabled { opacity:.55; cursor:wait; }
   .tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
   .tabs button { flex:1 1 auto; background:#232631; color:var(--fg); border:1px solid var(--line); border-radius:6px;
                  padding:6px 8px; font:inherit; font-size:12.5px; cursor:pointer; }
@@ -138,6 +148,11 @@
 <div id="hud">
   <h1><span>🐒 猴子打字机</span><button id="about" title="项目背景：无限猴子定理">📖 背景</button></h1>
   <div class="sub">目标：<span id="tgt"></span></div>
+  <div class="targetedit">
+    <input id="targetInput" maxlength="20" placeholder="自定义目标（4–20 字）" autocomplete="off" spellcheck="false"
+           title="4–20 个字；目标里的新字会加入键盘，通顺度评分可能偏低">
+    <button id="targetTrain">训练此目标</button>
+  </div>
   <div class="tabs" id="tabs"></div>
   <div class="train">
     <button id="train">🎲 实时训练</button>
@@ -147,7 +162,7 @@
   <div class="typed" id="typed"></div>
   <div class="target" id="tline"></div>
   <div class="row"><span id="stepLabel">步</span><b id="step">0</b></div>
-  <div class="row"><span>正确字数</span><b id="score">0 / 13</b></div>
+  <div class="row"><span>正确字数</span><b id="score">0 / —</b></div>
   <div class="row" id="extraRow"><span id="extraLabel"></span><b id="extra"></b></div>
   <canvas id="chart"></canvas>
   <div class="ctrl">

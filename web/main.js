@@ -3,6 +3,7 @@ import { OrbitControls } from './vendor/OrbitControls.js';
 
 // ---------------------------------------------------------------- 数据
 const $ = (id) => document.getElementById(id);
+const esc = (c) => c.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 let R = null, TARGET = '', EXPS = {};
 const match = (s) => {
   let n = 0;
@@ -14,7 +15,7 @@ function buildExps() {
   const E = {
     random: {
       label: '① 纯随机', stepLabel: '尝试次数',
-      desc: () => `每次在 ${R.vocab_size} 个字的键盘上随机敲 13 下，没有任何反馈。` +
+      desc: () => `每次在 ${R.vocab_size} 个字的键盘上随机敲 ${TARGET.length} 下，没有任何反馈。` +
         `搜索空间约 10<sup>${R.exp1.theory.log10_search_space.toFixed(1)}</sup>，即使每秒 10 亿次，也要约 ` +
         `10<sup>${R.exp1.theory.log10_universe_ages.toFixed(1)}</sup> 个宇宙年龄。` +
         `本次 ${R.exp1.attempts.toLocaleString()} 次尝试最多只对了 ${R.exp1.best_match} 个字。`,
@@ -42,7 +43,7 @@ function buildExps() {
 }
 const RL_DESC = {
   sparse: '稀疏奖励：只有一字不差才给奖励。猴子几乎永远拿 0 分，学不到任何东西，等同于随机猴子。',
-  fluency: '只奖励"通顺"（三元语言模型打分）。猴子学会了刷分，反复敲高频片段，越来越"像话"，却离哈姆雷特越来越远。这就是 reward hacking 和模式坍缩。',
+  fluency: '只奖励"通顺"（三元语言模型打分）。猴子学会了刷分，反复敲高频片段，越来越"像话"，却离目标越来越远。这就是 reward hacking 和模式坍缩。',
   target: '奖励 = 与目标句逐位相同的字数。高于平均的句子被激励，低于平均的被惩罚（REINFORCE）。',
   mixed: '奖励 = 通顺度 + 0.6 × 正确字数。先学会"说人话"，但也可能被困在通顺的局部最优里（看多种子结果）。',
 };
@@ -255,6 +256,7 @@ for (const [k, e] of Object.entries(EXPS)) {
   tabs.appendChild(b);
 }
 $('tgt').textContent = TARGET;
+$('targetInput').value = TARGET;
 
 function select(k) {
   if (!EXPS[k]) return;
@@ -272,6 +274,7 @@ function applyResults(data) {
   R = data; TARGET = R.target;
   EXPS = buildExps();
   $('tgt').textContent = TARGET;
+  $('targetInput').value = TARGET;
   select(expKey && EXPS[expKey] ? expKey : 'weasel');
 }
 function seekTo(i) {
@@ -286,10 +289,13 @@ function seekTo(i) {
 function updateHud() {
   const f = exp.frames[fi];
   $('step').textContent = f.step.toLocaleString();
+  const L = Math.max(1, TARGET.length);
   const typed = [...f.text].slice(0, ci);
-  $('typed').innerHTML = typed.map((c, i) => `<span class="${c === TARGET[i] ? 'ok' : 'no'}">${c}</span>`).join('') + (ci < 13 ? '<span class="no">▌</span>' : '');
+  $('typed').style.fontSize = `${Math.max(13, Math.min(22, 320 / L))}px`;
+  $('typed').style.letterSpacing = `${L > 13 ? 1 : 3}px`;
+  $('typed').innerHTML = typed.map((c, i) => `<span class="${c === TARGET[i] ? 'ok' : 'no'}">${esc(c)}</span>`).join('') + (ci < L ? '<span class="no">▌</span>' : '');
   $('tline').textContent = '目标 ' + TARGET;
-  $('score').textContent = `${match(typed.join(''))} / 13`;
+  $('score').textContent = `${match(typed.join(''))} / ${L}`;
   $('extra').textContent = f.extra || '';
   $('seek').value = Math.round((fi / Math.max(1, exp.frames.length - 1)) * 1000);
   drawChart();
@@ -303,7 +309,9 @@ function finishLine() {
   const prev = fi > 0 ? exp.frames[fi - 1].score : 0;
   const last = fi >= exp.frames.length - 1;
   if (f.text === TARGET) {
-    mood = 2; celebrate = 1; burst(); $('banner').classList.add('show');
+    mood = 2; celebrate = 1; burst();
+    $('banner').textContent = TARGET + '！';
+    $('banner').classList.add('show');
     setMood('🎉 打出来了！奖励一大串香蕉', 'var(--gold)');
     Sound.success();
     playing = false; finished = true; $('play').textContent = '重播';
@@ -332,13 +340,16 @@ function drawPaper(current) {
   pctx.fillText(`${exp.label}　${exp.stepLabel} ${exp.frames[fi].step.toLocaleString()}`, 40, 60);
   const all = [...lines, current];
   const show = all.slice(-10);
-  pctx.font = '46px "SimSun","Songti SC","Noto Serif CJK SC",serif';
+  const L = Math.max(1, TARGET.length);
+  const cw = Math.min(52, (W - 80) / L);
+  const fs = Math.min(46, cw * 0.92);
+  pctx.font = `${fs}px "SimSun","Songti SC","Noto Serif CJK SC",serif`;
   show.forEach((s, li) => {
     const y = 110 + li * 78;
     [...s].forEach((c, i) => {
       pctx.fillStyle = s === TARGET ? '#b8860b' : c === TARGET[i] ? '#1e7a3a' : '#2a2a2a';
       pctx.globalAlpha = li === show.length - 1 ? 1 : 0.35 + 0.6 * (li / show.length);
-      pctx.fillText(c, 40 + i * 52, y);
+      pctx.fillText(c, 40 + i * cw, y);
     });
   });
   pctx.globalAlpha = 1;
@@ -355,16 +366,17 @@ function drawChart() {
   const w = (chart.width = chart.clientWidth * dpr), h = (chart.height = chart.clientHeight * dpr);
   cctx.clearRect(0, 0, w, h);
   const F = exp.frames, n = F.length, pad = 6 * dpr;
-  const X = (i) => pad + (i / Math.max(1, n - 1)) * (w - 2 * pad), Y = (v) => h - pad - (v / 13) * (h - 2 * pad);
+  const L = Math.max(1, TARGET.length);
+  const X = (i) => pad + (i / Math.max(1, n - 1)) * (w - 2 * pad), Y = (v) => h - pad - (v / L) * (h - 2 * pad);
   cctx.strokeStyle = '#2c303b'; cctx.lineWidth = dpr;
-  for (const v of [0, 13]) { cctx.beginPath(); cctx.moveTo(pad, Y(v)); cctx.lineTo(w - pad, Y(v)); cctx.stroke(); }
+  for (const v of [0, L]) { cctx.beginPath(); cctx.moveTo(pad, Y(v)); cctx.lineTo(w - pad, Y(v)); cctx.stroke(); }
   cctx.strokeStyle = '#555a66'; cctx.lineWidth = 1.5 * dpr; cctx.beginPath();
   F.forEach((f, i) => (i ? cctx.lineTo(X(i), Y(f.score)) : cctx.moveTo(X(i), Y(f.score)))); cctx.stroke();
   cctx.strokeStyle = '#f2c14e'; cctx.lineWidth = 2 * dpr; cctx.beginPath();
   F.slice(0, fi + 1).forEach((f, i) => (i ? cctx.lineTo(X(i), Y(f.score)) : cctx.moveTo(X(i), Y(f.score)))); cctx.stroke();
   cctx.fillStyle = '#f2c14e'; cctx.beginPath(); cctx.arc(X(fi), Y(F[fi].score), 3.5 * dpr, 0, 7); cctx.fill();
   cctx.fillStyle = '#9a9ca3'; cctx.font = `${10 * dpr}px sans-serif`;
-  cctx.fillText('13', pad + 2, Y(13) + 11 * dpr); cctx.fillText('正确字数', w - 52 * dpr, h - 10 * dpr);
+  cctx.fillText(String(L), pad + 2, Y(L) + 11 * dpr); cctx.fillText('正确字数', w - 52 * dpr, h - 10 * dpr);
 }
 
 // ---------------------------------------------------------------- 控件
@@ -583,7 +595,7 @@ function tick() {
     let guard = 0;
     while (acc >= 1 && playing && guard++ < 500) {
       acc -= 1;
-      if (ci < 13) press(); else finishLine();
+      if (ci < TARGET.length) press(); else finishLine();
     }
     updateHud();
   }
@@ -673,21 +685,38 @@ function getCorpus() {
   return corpusPromise;
 }
 let training = false;
+const targetInput = $('targetInput'), targetBtn = $('targetTrain');
+function validateTarget(raw) {
+  const s = (raw || '').trim();
+  const chars = [...s];
+  if (chars.length < 4 || chars.length > 20) return '目标需要 4–20 个字';
+  if (chars.some((c) => /\s/.test(c))) return '目标里不能有空格或换行';
+  const bad = chars.find((c) => !/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef\x21-\x7e]/.test(c));
+  if (bad) return `目标里有不支持的字符：${bad}`;
+  return '';
+}
 function trainingFailed(message) {
   training = false;
   trainingActive = false;
   $('train').disabled = false;
   $('train').textContent = '🎲 再试一次';
+  targetInput.disabled = false;
+  targetBtn.disabled = false;
+  targetBtn.textContent = '训练此目标';
   $('trainmsg').textContent = message;
 }
-function startTraining() {
+function startTraining(targetOverride) {
   if (training) return;
+  const target = (targetOverride || TARGET || '').trim();
+  const err = validateTarget(target);
+  if (err) { $('trainmsg').textContent = err; targetInput.focus(); return; }
   training = true;
   trainingActive = true;
   playing = false;
   $('play').textContent = '继续';
   const btn = $('train'), msg = $('trainmsg');
   btn.disabled = true; btn.textContent = '训练中…';
+  targetInput.disabled = true; targetBtn.disabled = true; targetBtn.textContent = '训练中…';
   msg.textContent = '加载语料…';
   const t0 = performance.now();
   let seed = 0;
@@ -709,6 +738,9 @@ function startTraining() {
         applyResults(results);
         msg.textContent = `实时训练 · 种子 ${seed} · 用时 ${secs}s`;
         btn.disabled = false; btn.textContent = '🎲 再跑一次';
+        targetInput.disabled = false;
+        targetBtn.disabled = false;
+        targetBtn.textContent = '训练此目标';
         training = false;
       } catch (err) {
         trainingFailed('应用结果失败：' + err.message);
@@ -723,17 +755,28 @@ function startTraining() {
       else if (d.type === 'error') { worker.terminate(); trainingFailed('训练出错：' + d.message); }
     };
     worker.onerror = (err) => { worker.terminate(); trainingFailed('Worker 出错：' + (err.message || err)); };
-    worker.postMessage({ seed, corpus });
+    worker.postMessage({ seed, corpus, target });
   }).catch((err) => trainingFailed('读不到 data/corpus.txt：' + err.message));
 }
-$('train').onclick = startTraining;
+$('train').onclick = () => startTraining();
+function applyCustomTarget() {
+  if (training) return;
+  const s = targetInput.value;
+  const err = validateTarget(s);
+  if (err) { $('trainmsg').textContent = err; targetInput.focus(); return; }
+  startTraining(s.trim());
+}
+targetBtn.onclick = applyCustomTarget;
+targetInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); applyCustomTarget(); }
+});
 getCorpus().catch(() => {}); // 提前预取，点按钮时不用等
 
 // ---------------------------------------------------------------- 背景浮层
 const INTRO_LINES = [
   '如果让一只猴子在打字机上随机敲键，只要时间足够长，它几乎必然会敲出莎士比亚的作品。',
   '这就是<em>无限猴子定理</em>：一个几乎不可能的事件，在无限次独立尝试下，概率趋近于 1。',
-  '但它只回答“会不会”，不回答“要多久”。373 个字符，13 个字，期望尝试次数约 10<sup>33.4</sup>。',
+  '但它只回答“会不会”，不回答“要多久”。以默认的 373 个字符、13 个字为例，期望尝试次数约 10<sup>33.4</sup>。',
   '即使每秒尝试 10 亿次，也要约 620 万个宇宙年龄。',
   '所以真正的题目不是“等”，而是“怎样让它发生”。',
   '1986 年，Dawkins 用<em>黄鼠狼程序</em>演示了累积选择：保留已经对了一点点的中间结果，让指数搜索变成爬山。',
@@ -873,6 +916,7 @@ window.__monkey = {
   intro: { open: openIntro, close: closeIntro, get isOpen() { return introOpen; }, get index() { return introIdx; } },
   get summary() {
     return {
+      target: TARGET,
       seed: R.seed, gens: R.exp2.generations, evals: R.exp2.evaluations,
       best: R.exp1.best_match,
       hits: Object.fromEntries(Object.entries(R.exp3).map(([k, v]) => [k, v.hit_step])),
