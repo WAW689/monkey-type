@@ -758,7 +758,13 @@ function startTraining(targetOverride) {
     worker.postMessage({ seed, corpus, target });
   }).catch((err) => trainingFailed('读不到 data/corpus.txt：' + err.message));
 }
-$('train').onclick = () => startTraining();
+$('train').onclick = () => {
+  if (training) return;
+  // 如果输入框里改过目标，大按钮也按新目标训练，避免“点了没反应”
+  const s = targetInput.value.trim();
+  if (s && s !== TARGET) { applyCustomTarget(); return; }
+  startTraining();
+};
 function applyCustomTarget() {
   if (training) return;
   const s = targetInput.value;
