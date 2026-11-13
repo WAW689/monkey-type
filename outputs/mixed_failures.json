@@ -1,0 +1,47 @@
+[
+ {
+  "seed": 0,
+  "hit": null,
+  "greedy": "生存的是毁灭，这是一个学题",
+  "match": 11,
+  "ppl": 8.76,
+  "reward_target": 6.424,
+  "reward_greedy": 4.43
+ },
+ {
+  "seed": 1,
+  "hit": null,
+  "greedy": "生存还是一灭，这是一个很题",
+  "match": 11,
+  "ppl": 11.19,
+  "reward_target": 6.424,
+  "reward_greedy": 4.185
+ },
+ {
+  "seed": 5,
+  "hit": null,
+  "greedy": "这存还是一灭，我是一个问。",
+  "match": 9,
+  "ppl": 13.6,
+  "reward_target": 6.424,
+  "reward_greedy": 2.79
+ },
+ {
+  "seed": 6,
+  "hit": null,
+  "greedy": "生存还是毁灭，也是一个问。",
+  "match": 11,
+  "ppl": 4.95,
+  "reward_target": 6.424,
+  "reward_greedy": 5.002
+ },
+ {
+  "seed": 7,
+  "hit": null,
+  "greedy": "生存还是一个，这是一个问题",
+  "match": 11,
+  "ppl": 5.97,
+  "reward_target": 6.424,
+  "reward_greedy": 4.813
+ }
+]
