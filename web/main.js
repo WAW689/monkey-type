@@ -730,7 +730,7 @@ function startTraining(targetOverride) {
 
   getCorpus().then((corpus) => {
     msg.textContent = '训练中 · ① 随机';
-    const worker = new Worker('./train.js');
+    const worker = new Worker('./train.js?v=20261113-custom');
     const done = (results) => {
       try {
         const secs = ((performance.now() - t0) / 1000).toFixed(1);
@@ -775,6 +775,13 @@ function applyCustomTarget() {
 targetBtn.onclick = applyCustomTarget;
 targetInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); applyCustomTarget(); }
+});
+targetInput.addEventListener('input', () => {
+  if (training) return;
+  const s = targetInput.value.trim();
+  $('trainmsg').textContent = s && s !== TARGET
+    ? '目标已改：点「训练此目标」或「🎲 实时训练」开始，训练完成后才切换'
+    : '示例回放 · 点按钮用随机种子现场训练';
 });
 getCorpus().catch(() => {}); // 提前预取，点按钮时不用等
 
