@@ -7,7 +7,8 @@
 > 第一次打开会先播一段背景开场：镜头转到侧面，文字从旁侧的黑背景里逐句浮现；之后可随时点「📖 背景」重看。
 >
 > **上海对外经贸大学 · 山狗**  
-> 三分钟录屏演讲稿：[PRESENTATION_SEQ.md](PRESENTATION_SEQ.md)（先网站、后代码）
+> 三分钟录屏演讲稿：[PRESENTATION_SEQ.md](PRESENTATION_SEQ.md)（先网站、后代码）  
+> **GitHub 仓库**：<https://github.com/WAW689/monkey-type>
 
 ## 背景：从“无限猴子”说起
 
@@ -81,6 +82,10 @@ Richard Dawkins 在 1986 年的《盲眼钟表匠》里设计了一个著名的�
 ## 快速开始
 
 ```bash
+# 0. 获取代码（也可以直接在 GitHub 下载 ZIP）
+git clone https://github.com/WAW689/monkey-type.git
+cd monkey-type
+
 # 1. 安装依赖（只有两个）
 py -m pip install -r requirements.txt
 
